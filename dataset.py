@@ -55,21 +55,24 @@ def from_categorical(t):
 
 
 def merge(texts, tnss, nss, dss, sss):
-    res = []
-    for ts, tns, ns, ds, ss in zip(texts, tnss, nss, dss, sss):
-        sentence = []
-        for t, tn, n, d, s in zip(ts, tns, ns, ds, ss):
-            if tn == 0:
-                break
-            sentence.append(t)
-            if hebrew.can_dagesh(t):
-                sentence.append(dagesh_table.indices_char[d].replace(hebrew.RAFE, ''))
-            if hebrew.can_sin(t):
-                sentence.append(sin_table.indices_char[s].replace(hebrew.RAFE, ''))
-            if hebrew.can_niqqud(t):
-                sentence.append(niqqud_table.indices_char[n].replace(hebrew.RAFE, ''))
-        res.append(''.join(sentence))
-    return res
+    batch = []
+    for ts1, tns1, ns1, ds1, ss1 in zip(texts, tnss, nss, dss, sss):
+        row = []
+        for ts, tns, ns, ds, ss in zip(ts1, tns1, ns1, ds1, ss1):
+            sentence = []
+            for t, tn, n, d, s in zip(ts, tns, ns, ds, ss):
+                if tn == 0:
+                    break
+                sentence.append(t)
+                if hebrew.can_dagesh(t):
+                    sentence.append(dagesh_table.indices_char[d].replace(hebrew.RAFE, ''))
+                if hebrew.can_sin(t):
+                    sentence.append(sin_table.indices_char[s].replace(hebrew.RAFE, ''))
+                if hebrew.can_niqqud(t):
+                    sentence.append(niqqud_table.indices_char[n].replace(hebrew.RAFE, ''))
+            row.append(''.join(sentence))
+        batch.append(row)
+    return batch
 
 
 class Data:
