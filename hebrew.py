@@ -207,24 +207,17 @@ class Token:
         return len(self.items) > 2 and self.items[0].niqqud == 'הַ'[-1] and self.items[0].letter in 'כבלה'
 
 
-def tokenize_into(tokens_list: List[Token], char_iterator: Iterator[HebrewItem]) -> Iterator[HebrewItem]:
+def tokenize(char_iterator: Iterator[HebrewItem]) -> Iterator[Token]:
     current = []
     for c in char_iterator:
         if c.letter.isspace() or c.letter == '-':
             if current:
-                tokens_list.append(Token(current).strip_nonhebrew())
+                yield Token(current)  # .strip_nonhebrew())
             current = []
-        else:
+        if not c.letter.isspace():
             current.append(c)
-        yield c
     if current:
-        tokens_list.append(Token(current).strip_nonhebrew())
-
-
-def tokenize(iterator: Iterator[HebrewItem]) -> List[Token]:
-    tokens = []
-    _ = list(tokenize_into(tokens, iterator))
-    return tokens
+        yield Token(current)  #.strip_nonhebrew())
 
 
 def collect_wordmap(tokens: Iterable[Token]):
@@ -258,6 +251,6 @@ def stuff(tokens):
 
 
 if __name__ == '__main__':
-    tokens = collect_tokens(['hebrew_diacritized_private/'])
-    stuff(tokens)
-    print(len(tokens))
+    tokens = collect_tokens(['hebrew_diacritized/modern/blogs/1.txt'])
+    for t in tokens:
+        print(t)
