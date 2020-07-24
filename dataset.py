@@ -105,7 +105,7 @@ class Data:
         # self.kind = self.kind[indices]
 
     @staticmethod
-    def from_text(heb_items, wordsize, maxlen: int) -> 'Data':
+    def from_text(heb_items, maxlen: int, wordsize) -> 'Data':
         assert heb_items
         self = Data()
 
@@ -190,8 +190,9 @@ def load_data(corpora, validation_rate: float, maxlen: int, wordsize: int, shuff
 
 
 if __name__ == '__main__':
-    data = Data.concatenate([Data.from_text(x, maxlen=8, wordsize=10) for x in read_corpora(['hebrew_diacritized/modern/newspapers/1.txt'])])
-    print(data.normalized)
+    corpus = read_corpora(['hebrew_diacritized/modern/newspapers/'])
+    data, _ = load_data(corpus, validation_rate=0, maxlen=8, wordsize=10, shuffle=False)
+    print(data.normalized.shape)
     # data.print_stats()
     # print(np.concatenate([data.normalized[:1], data.sin[:1]]))
     # res = merge(data.text[:1], data.normalized[:1], data.niqqud[:1], data.dagesh[:1], data.sin[:1])
