@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple
 
 import os
 import numpy as np
@@ -28,7 +28,6 @@ class CharacterTable:
         return repr(self.chars)
 
 
-letters_table = CharacterTable(hebrew.SPECIAL_TOKENS + hebrew.VALID_LETTERS)
 dagesh_table = CharacterTable(hebrew.DAGESH)
 sin_table = CharacterTable(hebrew.NIQQUD_SIN)
 niqqud_table = CharacterTable(hebrew.NIQQUD)
@@ -36,7 +35,6 @@ KINDS = ('biblical', 'rabanit', 'poetry', 'pre_modern', 'modern', 'garbage')
 
 
 def print_tables():
-    print('const ALL_TOKENS =', letters_table.chars, end=';\n')
     print('const niqqud_array =', niqqud_table.chars, end=';\n')
     print('const dagesh_array =', dagesh_table.chars, end=';\n')
     print('const sin_array =', sin_table.chars, end=';\n')
@@ -46,14 +44,14 @@ def from_categorical(t):
     return np.argmax(t, axis=-1)
 
 
-def merge(texts, tnss, nss, dss, sss):
+def merge(texts, nss, dss, sss):
     res = []
-    for ts, tns, ns, ds, ss in zip(texts, tnss, nss, dss, sss):
+    for ts, ns, ds, ss in zip(texts, nss, dss, sss):
         sentence = []
-        for t, tn, n, d, s in zip(ts, tns, ns, ds, ss):
-            if tn == 0:
+        for t, n, d, s in zip(ts, ns, ds, ss):
+            if t == 0:
                 break
-            sentence.append(t)
+            sentence.append(chr(t))
             if hebrew.can_dagesh(t):
                 sentence.append(dagesh_table.indices_char[d].replace(hebrew.RAFE, ''))
             if hebrew.can_sin(t):
@@ -66,7 +64,6 @@ def merge(texts, tnss, nss, dss, sss):
 
 class Data:
     text: np.ndarray = None
-    normalized: np.ndarray = None
     dagesh: np.ndarray = None
     sin: np.ndarray = None
     niqqud: np.ndarray = None
@@ -76,7 +73,6 @@ class Data:
     def concatenate(others):
         self = Data()
         self.text = np.concatenate([x.text for x in others])
-        self.normalized = np.concatenate([x.normalized for x in others])
         self.dagesh = np.concatenate([x.dagesh for x in others])
         self.sin = np.concatenate([x.sin for x in others])
         self.niqqud = np.concatenate([x.niqqud for x in others])
@@ -85,12 +81,11 @@ class Data:
         return self
 
     def shapes(self):
-        return self.text.shape, self.normalized.shape, self.dagesh.shape, self.sin.shape, self.niqqud.shape #, self.kind.shape
+        return self.text.shape, self.dagesh.shape, self.sin.shape, self.niqqud.shape #, self.kind.shape
 
     def shuffle(self):
         indices = np.random.permutation(len(self))
         self.text = self.text[indices]
-        self.normalized = self.normalized[indices]
         self.dagesh = self.dagesh[indices]
         self.niqqud = self.niqqud[indices]
         self.sin = self.sin[indices]
@@ -100,16 +95,15 @@ class Data:
     def from_text(heb_items, maxlen: int) -> 'Data':
         assert heb_items
         self = Data()
-        text, normalized, dagesh, sin, niqqud = zip(*(zip(*line) for line in hebrew.split_by_length(heb_items, maxlen)))
+        text, dagesh, sin, niqqud = zip(*(zip(*line) for line in hebrew.split_by_length(heb_items, maxlen)))
 
         def pad(ords, dtype='int32', value=0):
             return utils.pad_sequences(ords, maxlen=maxlen, dtype=dtype, value=value)
 
-        self.normalized = pad(letters_table.to_ids(normalized))
+        self.text = pad([[ord(x) for x in xs] for xs in text])
         self.dagesh = pad(dagesh_table.to_ids(dagesh))
         self.sin = pad(sin_table.to_ids(sin))
         self.niqqud = pad(niqqud_table.to_ids(niqqud))
-        self.text = pad(text, dtype='<U1', value=0)
         return self
 
     def add_kind(self, path):
@@ -119,7 +113,7 @@ class Data:
             self.kind = np.full(len(self), KINDS.index(dirname))
 
     def __len__(self):
-        return self.normalized.shape[0]
+        return self.text.shape[0]
 
     def print_stats(self):
         print(self.shapes())
@@ -159,8 +153,7 @@ def load_data(corpora, validation_rate: float, maxlen: int, shuffle=True) -> Tup
 if __name__ == '__main__':
     # data = Data.concatenate([Data.from_text(x, maxlen=64) for x in read_corpora(['hebrew_diacritized/modern/wiki/1.txt'])])
     # data.print_stats()
-    # print(np.concatenate([data.normalized[:1], data.sin[:1]]))
-    # res = merge(data.text[:1], data.normalized[:1], data.niqqud[:1], data.dagesh[:1], data.sin[:1])
+    # print(np.concatenate([data.text[:1], data.sin[:1]]))
+    # res = merge(data.text[:1], data.niqqud[:1], data.dagesh[:1], data.sin[:1])
     # print(res)
     print_tables()
-    print(letters_table.to_ids(["שלום"]))

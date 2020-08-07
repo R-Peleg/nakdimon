@@ -29,24 +29,8 @@ SPECIAL_TOKENS = ['H', 'O', '5']
 ENDINGS_TO_REGULAR = dict(zip('ךםןףץ', 'כמנפצ'))
 
 
-def normalize(c):
-    if c in VALID_LETTERS: return c
-    if c in ENDINGS_TO_REGULAR: return ENDINGS_TO_REGULAR(c)
-    if c in ['\n', '\t']: return ' '
-    if c in ['־', '‒', '–', '—', '―', '−']: return '-'
-    if c == '[': return '('
-    if c == ']': return ')'
-    if c in ['´', '‘', '’']: return "'"
-    if c in ['“', '”', '״']: return '"'
-    if c.isdigit(): return '5'
-    if c == '…': return ','
-    if c in ['ײ', 'װ', 'ױ']: return 'H'
-    return 'O'
-
-
 class HebrewItem(NamedTuple):
     letter: str
-    normalized: str
     dagesh: str
     sin: str
     niqqud: str
@@ -110,16 +94,17 @@ def iterate_dotted_text(text: str) -> Iterator[HebrewItem]:
     i = 0
     while i < n:
         letter = text[i]
+        if ord(letter) > 8362:
+            letter = '~'
 
         dagesh = RAFE if can_dagesh(letter) else ''
         sin = RAFE if can_sin(letter) else ''
         niqqud = RAFE if can_niqqud(letter) else ''
-        normalized = normalize(letter)
         i += 1
 
         assert letter not in ANY_NIQQUD, f'{i}, {text[i - 15:i + 15]}'
 
-        if is_hebrew_letter(normalized):
+        if is_hebrew_letter(letter):
             if text[i] == DAGESH_LETTER:
                 assert dagesh == RAFE, (text[i-5:i+5])
                 dagesh = text[i]
@@ -136,7 +121,7 @@ def iterate_dotted_text(text: str) -> Iterator[HebrewItem]:
                 dagesh = RAFE
                 niqqud = DAGESH_LETTER
 
-        yield HebrewItem(letter, normalized, dagesh, sin, niqqud)
+        yield HebrewItem(letter, dagesh, sin, niqqud)
 
 
 def iterate_file(path):
