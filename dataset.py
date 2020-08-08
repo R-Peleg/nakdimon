@@ -150,10 +150,19 @@ def load_data(corpora, validation_rate: float, maxlen: int, shuffle=True) -> Tup
     return train, validation_data
 
 
+def load_plaintext(filename, maxlen, maxembed):
+    import math
+    with open(filename, encoding='utf8') as f:
+        text = f.read()
+    res = np.array([ord(x) for x in text if ord(x) < maxembed])
+    res.resize((math.ceil(len(res) / maxlen), maxlen), refcheck=False)
+    return res
+
+
 if __name__ == '__main__':
     # data = Data.concatenate([Data.from_text(x, maxlen=64) for x in read_corpora(['hebrew_diacritized/modern/wiki/1.txt'])])
     # data.print_stats()
     # print(np.concatenate([data.text[:1], data.sin[:1]]))
     # res = merge(data.text[:1], data.niqqud[:1], data.dagesh[:1], data.sin[:1])
     # print(res)
-    print_tables()
+    print(load_plaintext("../wikipedia/AA/wiki_00", 30))

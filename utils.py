@@ -8,6 +8,8 @@ import numpy as np
 
 
 def iterate_files(base_paths: List[str]) -> List[str]:
+    if isinstance(base_paths, str):
+        base_paths = [base_paths]
     for name in base_paths:
         if not os.path.isdir(name):
             yield name
